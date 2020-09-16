@@ -23,7 +23,7 @@ class PerceptronClassifier():
     def __init__(self):
         self.w = None
         
-    def fit(self, X, y, maxiter=1<<16, w=None):
+    def fit(self, X, y, maxiter=1 << 16):
         """
         Implement Pocket Perceptron learning algorithm - run for at most maxiter iterations and store best w found as well as the training history 
         
@@ -38,14 +38,33 @@ class PerceptronClassifier():
         history: list of (w, x, y, acc) - algorithm history so we can animate the algorithm and see what it does: For each iteration of the algorithm store w, the misclassified point x and label y used to update w, and the current score. Remember to store the last w after the iteration is done as well, set x, y to None for that entry. See the commented code for help
     
         """
-        if w is None:
-            w = np.zeros(X.shape[1])       
-        bestw = w
+        if self.w is None:
+            self.w = np.zeros(X.shape[1])
+        bestw = self.w
         L = []
         # L.append((w.copy(), _x.copy(), _y.copy(), cur_score)) # to store current update (before w is updated)
-        ### YOUR CODE
-        ### END CODE
-        # L.append((w.copy(), None, None, cur_score)) # to store final w
+        cur_score = 0
+        best_score = cur_score
+        for _ in range(maxiter):
+
+            pred = self.predict(X)
+            wrong_filter = np.not_equal(pred, y, )
+            wrong_filter = wrong_filter[wrong_filter != False]
+            if len(wrong_filter) == 0:
+                L.append((self.w.copy(), None, None, cur_score))
+                break
+
+            index = np.random.choice(wrong_filter)
+            _x = X[index]
+            _y = y[index]
+            L.append((self.w.copy(), _x.copy(), _y.copy(), cur_score))
+            self.w += np.dot(_y[0], _x[0])
+
+            cur_score = self.score(X, y)
+            if cur_score > best_score:
+                best_score = cur_score
+                bestw = self.w
+
         self.w = bestw
         self.history = L
 
@@ -57,9 +76,7 @@ class PerceptronClassifier():
         Returns
           pred, the predictions - numpy array,  shape (n,), (prediction values is in {-1, +1})
         """
-        pred = None
-        ### YOUR CODE HERE 1-2 lines
-        ### END CODE
+        pred = np.sign(np.dot(X, self.w))
         return pred
 
     def score(self, X, y):
@@ -70,12 +87,9 @@ class PerceptronClassifier():
         returns
           score - classifier accuracy (not error) on data X with labels y (float)
         """
-        score = 0 
-        ### YOUR CODE HERE 1-3 lines
-        ### END CODE
+        score = np.mean(np.equal(self.predict(X), y))
         return score
-    
-        
+
 
 def test_pla_train(n_samples=10):
     """ Test function for pla train """
@@ -97,34 +111,45 @@ def test_pla_train(n_samples=10):
     ax.set_title('easy data set')
     plt.show()
     return X, y
-    
+
 def make_hyperplane(w, ax):
     """ 
-    Compute the hyperplane (line) w0 + w1*x1 + w2*x2 = 0 in the range R = [xmin,xmax] times [ymin,ymax] for a generic w = (w0,w1,w2).
-    Copy the code from the notebook
- 
-    Remember to handle possible special cases! 
-    
+    Construct the hyperplane (line) w0 + w1*x1 + w2*x2 = 0 in the range R = [xmin,xmax] times [ymin,ymax] for a generic w = (w0,w1,w2).
+
+    We will proceed in a similar fashion as we did in the previous task.
+    There we had xmin = ymin = 0 and xmax = ymax = 1 (i.e. the range was [0,1]x[0,1]), and we just found the intersection points of the hyperplane with the two vertical lines x1=0 and x1=1.
+    How can we find these two points for a generic w = (w0,w1,w2) and a generic range ([xmin,xmax] x [ymin,ymax])?
+
+    Remember to handle possible special cases!
+
+
     Args:
     w: numpy array shape (d,)
     ax: axis object (to plot on)
     return x, y
     """
+
     if w[1]==0 and w[2]==0:
+        print('Invalid hyperplane')
         return None, None
-    # Notice that w1 and w2 are not allowed to be 0 simultaneously, but it may be the case that one of them equals 0
-    
+        # Notice that w1 and w2 are not allowed to be 0 simultaneously, but it may be the case that one of them equals 0
+
     xmin, xmax, ymin, ymax = ax.axis()
-    
+
     # Write the code here to create two NumPy arrays called x and y.
     # The arrays x and y will contain the x1's and x2's coordinates of the two endpoints of the line, respectively.
-    
+
     x = np.array((0,1))
     y = np.array((0,1))
-    
-    ### YOUR CODE HERE 4-8 lines
-    ### END CODE
-    
+
+    x_1 = lambda w, x: -(w[0] + w[2]*x)/w[1]
+    ## Need a 0-check
+
+    x_min = x_1(w, ymin)
+    x_max = x_1(w, ymax)
+    x = np.array([x_min, x_max])
+    y = np.array([ymin, ymax])
+
     return x, y
     
 def run_animation(X, y):
