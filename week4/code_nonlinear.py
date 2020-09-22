@@ -332,8 +332,7 @@ class LinRegClassifier():
 
         """  
         w = np.zeros(X.shape[1])
-        ### YOUR CODE HERE 1-3 lines
-        ### END CODE
+        w = np.linalg.pinv()
         self.w =  w
 
     def predict(self, X):
